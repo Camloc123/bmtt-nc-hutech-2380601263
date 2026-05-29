@@ -5,24 +5,23 @@ from flask_cors import CORS
 from cipher.caesar import CaesarCipher 
 from cipher.vigenere import VigenereCipher
 from cipher.railfence import RailFenceCipher
-from cipher.Playfair import PlayfairCipher
-from cipher.transposition import TranspositionCipher
+
+
 
 app = Flask(__name__)
-# Bật CORS cho toàn bộ app
+
 CORS(app)
 
-# Khởi tạo các cipher tĩnh (không cần truyền key lúc khởi tạo)
 caesar_cipher = CaesarCipher() 
 vigenere_cipher = VigenereCipher()
 railfence_cipher = RailFenceCipher()
+playfair_cipher  = PlayfairCipher()
 
-# ================= HEALTH CHECK =================
 @app.route("/", methods=["GET"])
 def health_check():
     return jsonify({"status": "success", "message": "Cipher API is running perfectly!"})
 
-# ================= CAESAR CIPHER =================
+
 @app.route("/api/caesar/encrypt", methods=["POST"])
 def caesar_encrypt():
     try:
@@ -57,7 +56,7 @@ def caesar_decrypt():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ================= VIGENERE CIPHER =================
+
 @app.route("/api/vigenere/encrypt", methods=["POST"])
 def vigenere_encrypt():
     try:
@@ -88,7 +87,6 @@ def vigenere_decrypt():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ================= RAILFENCE CIPHER =================
 @app.route("/api/railfence/encrypt", methods=["POST"])
 def railfence_encrypt():
     try:
@@ -123,7 +121,6 @@ def railfence_decrypt():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ================= PLAYFAIR CIPHER =================
 @app.route("/api/playfair/encrypt", methods=["POST"])
 def playfair_encrypt():
     try:
@@ -161,38 +158,6 @@ def playfair_decrypt():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ================= TRANSPOSITION CIPHER =================
-@app.route("/api/transposition/encrypt", methods=["POST"])
-def transposition_encrypt():
-    try:
-        data = request.get_json()
-        if not data or 'plain_text' not in data or 'key' not in data:
-            return jsonify({'error': 'Thiếu tham số plain_text hoặc key'}), 400
-            
-        plain_text = data['plain_text']
-        key = data['key']
-        
-        tp_cipher = TranspositionCipher(key)
-        encrypted_text = tp_cipher.encrypt(plain_text)
-        return jsonify({'encrypted_message' : encrypted_text})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route("/api/transposition/decrypt", methods=["POST"])
-def transposition_decrypt():
-    try:
-        data = request.get_json()
-        if not data or 'cipher_text' not in data or 'key' not in data:
-            return jsonify({'error': 'Thiếu tham số cipher_text hoặc key'}), 400
-            
-        cipher_text = data['cipher_text']
-        key = data['key']
-        
-        tp_cipher = TranspositionCipher(key)
-        decrypted_text = tp_cipher.decrypt(cipher_text)
-        return jsonify({'decrypted_message' : decrypted_text})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__": 
     app.run(host="0.0.0.0", port=5000, debug=True)
