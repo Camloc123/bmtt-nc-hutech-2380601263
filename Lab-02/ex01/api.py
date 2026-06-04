@@ -5,7 +5,7 @@ from flask_cors import CORS
 from cipher.caesar import CaesarCipher 
 from cipher.vigenere import VigenereCipher
 from cipher.railfence import RailFenceCipher
-
+from cipher.Playfair.playfair_cipher import PlayfairCipher
 
 
 app = Flask(__name__)
@@ -15,7 +15,6 @@ CORS(app)
 caesar_cipher = CaesarCipher() 
 vigenere_cipher = VigenereCipher()
 railfence_cipher = RailFenceCipher()
-playfair_cipher  = PlayfairCipher()
 
 @app.route("/", methods=["GET"])
 def health_check():
@@ -155,6 +154,22 @@ def playfair_decrypt():
     
     except AttributeError:
          return jsonify({'error': 'Hàm decrypt() chưa được định nghĩa trong file class PlayfairCipher của bạn'}), 501
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route("/api/playfair/creatematrix", methods=["POST"])
+def playfair_creatematrix():
+    try:
+        data = request.get_json()
+        if not data or 'key' not in data:
+            return jsonify({'error': 'Thiếu tham số key'}), 400
+            
+        key = data['key']
+        
+        pf_cipher = PlayfairCipher(key)
+        
+        return jsonify({'playfair_matrix': pf_cipher.matrix})
+    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -68,3 +68,26 @@ class PlayfairCipher:
 
         return ciphertext
 
+    def decrypt(self, ciphertext):
+        plaintext = ""
+        
+        i = 0
+        while i < len(ciphertext):
+            first_letter = ciphertext[i]
+            second_letter = ciphertext[i + 1]
+
+            pos1 = self.find_position(first_letter)
+            pos2 = self.find_position(second_letter)
+
+            if pos1[0] == pos2[0]:  # Same row
+                plaintext += self.matrix[pos1[0]][(pos1[1] - 1) % 5]
+                plaintext += self.matrix[pos2[0]][(pos2[1] - 1) % 5]
+            elif pos1[1] == pos2[1]:  # Same column
+                plaintext += self.matrix[(pos1[0] - 1) % 5][pos1[1]]
+                plaintext += self.matrix[(pos2[0] - 1) % 5][pos2[1]]
+            else:  # Rectangle
+                plaintext += self.matrix[pos1[0]][pos2[1]]
+                plaintext += self.matrix[pos2[0]][pos1[1]]
+            i += 2
+            
+        return plaintext
