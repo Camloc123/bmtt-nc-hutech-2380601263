@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playfair Cipher - Thực hành Bảo mật nâng cao</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Matrix Display Styling */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-width: 320px;
+            margin: 20px auto;
+        }
+        .matrix-cell {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            border-radius: 10px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .matrix-cell.highlight {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--gold);
+            color: var(--gold);
+            box-shadow: 0 0 10px var(--gold-glow);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar-custom">
+        <div class="container-custom" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <a href="/" class="navbar-brand-custom">
+                <img src="https://file1.hutech.edu.vn/file/editor/homepage/stories/hinh34/logo%20CMYK-01.png" alt="HUTECH">
+                <span>MẬT MÃ HỌC</span>
+            </a>
+            <div class="student-badge" id="navbarStudentBadge">
+                <span class="dot"></span>
+                <span id="navbarStudentName">Sinh Viên HUTECH</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-custom">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Playfair Cipher</h1>
+                <p class="page-subtitle">Mật mã đa ký tự đối xứng dựa trên ma trận khóa 5x5</p>
+            </div>
+            <a href="/" class="btn-outline-custom">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại Dashboard
+            </a>
+        </div>
+
+        <!-- Tool Grid -->
+        <div class="tool-grid">
+            <!-- Left Side: Forms -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                <!-- Encryption -->
+                <div class="card-custom">
+                    <h3 style="font-size: 1.4rem; color: #A855F7; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-lock"></i> MÃ HÓA (ENCRYPTION)
+                    </h3>
+                    <form id="encryptForm" method="POST" action="/playfair_encrypt" onsubmit="handleFormSubmit(event, 'encrypt')">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom" for="encryptPlainText">Bản rõ (Plain text)</label>
+                            <input type="text" class="form-control-custom" id="encryptPlainText" name="inputPlainText" placeholder="Nhập bản rõ cần mã hóa..." required autofocus>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom" for="encryptKey">Khóa chữ (Key - từ khóa)</label>
+                            <input type="text" class="form-control-custom" id="encryptKey" name="inputKeyPlain" placeholder="Ví dụ: MONARCHY" oninput="updateMatrix(this.value)" required>
+                        </div>
+                        <button type="submit" class="btn-gold" style="background: linear-gradient(135deg, #C084FC 0%, #A855F7 50%, #6B21A8 100%); box-shadow: 0 4px 15px rgba(168, 85, 247, 0.2);">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Tiến hành mã hóa
+                        </button>
+                    </form>
+
+                    <!-- Encryption Result -->
+                    <div class="result-container" id="encryptResultContainer">
+                        <div class="result-card">
+                            <div class="result-header">
+                                <span class="result-title"><i class="fa-solid fa-circle-check"></i> Bản mã kết quả</span>
+                                <button class="btn-copy" onclick="copyResult('encryptResultText', this)">Sao chép</button>
+                            </div>
+                            <div class="result-body" id="encryptResultText"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decryption -->
+                <div class="card-custom">
+                    <h3 style="font-size: 1.4rem; color: #10B981; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-lock-open"></i> GIẢI MÃ (DECRYPTION)
+                    </h3>
+                    <form id="decryptForm" method="POST" action="/playfair_decrypt" onsubmit="handleFormSubmit(event, 'decrypt')">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom" for="decryptCipherText">Bản mã (Cipher text)</label>
+                            <input type="text" class="form-control-custom" id="decryptCipherText" name="inputCipherText" placeholder="Nhập bản mã cần giải mã..." required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom" for="decryptKey">Khóa chữ (Key - từ khóa)</label>
+                            <input type="text" class="form-control-custom" id="decryptKey" name="inputKeyCipher" placeholder="Ví dụ: MONARCHY" oninput="updateMatrix(this.value)" required>
+                        </div>
+                        <button type="submit" class="btn-gold" style="background: linear-gradient(135deg, #A7F3D0 0%, #10B981 50%, #065F46 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);">
+                            <i class="fa-solid fa-unlock-keyhole"></i> Tiến hành giải mã
+                        </button>
+                    </form>
+
+                    <!-- Decryption Result -->
+                    <div class="result-container" id="decryptResultContainer">
+                        <div class="result-card" style="background: rgba(16, 185, 129, 0.03); border-color: rgba(16, 185, 129, 0.2);">
+                            <div class="result-header">
+                                <span class="result-title" style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Bản rõ kết quả</span>
+                                <button class="btn-copy" onclick="copyResult('decryptResultText', this)">Sao chép</button>
+                            </div>
+                            <div class="result-body" id="decryptResultText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Matrix Visualization -->
+            <div>
+                <div class="card-custom" style="position: sticky; top: 100px;">
+                    <h3 style="font-size: 1.4rem; color: var(--gold); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-border-all"></i> MA TRẬN KHÓA 5X5
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 20px; line-height: 1.4;">
+                        Ma trận Playfair tự động sinh theo khóa đã nhập (loại bỏ chữ trùng lặp và chuyển <strong>J</strong> thành <strong>I</strong>).
+                    </p>
+                    
+                    <div class="matrix-grid" id="playfairMatrix">
+                        <!-- Matrix letters will populate here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sync Student Info
+        window.addEventListener('DOMContentLoaded', () => {
+            const studentName = localStorage.getItem('studentName') || 'Sinh Viên HUTECH';
+            const studentID = localStorage.getItem('studentID') || '2380601263';
+            document.getElementById('navbarStudentName').innerText = `${studentName} (${studentID})`;
+            
+            // Initialize Matrix with empty/default key
+            updateMatrix('');
+        });
+
+        // Dynamic Matrix Generator
+        function updateMatrix(key) {
+            key = key.toUpperCase().replace(/J/g, 'I');
+            const alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ';
+            const seen = new Set();
+            const matrixLetters = [];
+
+            // Add letters from key
+            for (let char of key) {
+                if (char >= 'A' && char <= 'Z' && !seen.has(char)) {
+                    seen.add(char);
+                    matrixLetters.push(char);
+                }
+            }
+
+            // Add remaining letters
+            for (let char of alphabet) {
+                if (!seen.has(char)) {
+                    seen.add(char);
+                    matrixLetters.push(char);
+                }
+            }
+
+            // Render to HTML
+            const matrixGrid = document.getElementById('playfairMatrix');
+            matrixGrid.innerHTML = '';
+
+            matrixLetters.forEach(letter => {
+                const cell = document.createElement('div');
+                cell.className = 'matrix-cell';
+                // Highlight cells that came from the key
+                if (key.includes(letter)) {
+                    cell.className += ' highlight';
+                }
+                cell.innerText = letter;
+                matrixGrid.appendChild(cell);
+            });
+        }
+
+        // AJAX Form Submission
+        async function handleFormSubmit(event, mode) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const url = form.action;
+
+            // Enforce Playfair constraints
+            const key = formData.get('inputKeyPlain') || formData.get('inputKeyCipher');
+            const cleanKey = (key || '').replace(/[^A-Za-z]/g, '');
+            if (cleanKey.length === 0) {
+                showCustomAlert('Nguyên lý Playfair: Khóa chữ phải chứa ít nhất một chữ cái (A-Z, a-z)!');
+                return;
+            }
+
+            if (mode === 'encrypt') {
+                const plainText = formData.get('inputPlainText') || '';
+                const cleanPlainText = plainText.replace(/[^A-Za-z]/g, '');
+                if (cleanPlainText.length === 0) {
+                    showCustomAlert('Nguyên lý Playfair: Bản rõ phải chứa ít nhất một chữ cái (A-Z, a-z)!');
+                    return;
+                }
+            } else if (mode === 'decrypt') {
+                const cipherText = formData.get('inputCipherText') || '';
+                const cleanCipherText = cipherText.replace(/[^A-Za-z]/g, '');
+                if (cleanCipherText.length === 0) {
+                    showCustomAlert('Nguyên lý Playfair: Bản mã phải chứa ít nhất một chữ cái (A-Z, a-z)!');
+                    return;
+                }
+                if (cleanCipherText.length % 2 !== 0) {
+                    showCustomAlert('Nguyên lý Playfair: Bản mã hợp lệ phải có số lượng chữ cái là số chẵn để ghép đôi! Vui lòng kiểm tra lại.');
+                    return;
+                }
+            }
+
+            try {
+                const searchParams = new URLSearchParams();
+                for (const pair of formData.entries()) {
+                    searchParams.append(pair[0], pair[1]);
+                }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: searchParams,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Đã xảy ra lỗi khi kết nối server');
+                }
+
+                const htmlText = await response.text();
+
+                // Extract resulting text from response
+                const match = htmlText.match(/(?:encrypted|decrypted)\s*text:\s*(.*)/i);
+                const result = match ? match[1].trim() : htmlText;
+
+                // Display result
+                const containerId = `${mode}ResultContainer`;
+                const textId = `${mode}ResultText`;
+                
+                document.getElementById(containerId).style.display = 'block';
+                document.getElementById(textId).innerText = result;
+
+            } catch (error) {
+                showCustomAlert(error.message);
+            }
+        }
+
+        // Custom Premium Alert Modal
+        function showCustomAlert(message) {
+            let overlay = document.getElementById('customAlertOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'customAlertOverlay';
+                overlay.className = 'modal-overlay-custom';
+                overlay.innerHTML = `
+                    <div class="modal-box-custom">
+                        <div class="modal-icon-custom"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <h4 class="modal-title-custom">Cảnh báo nguyên lý</h4>
+                        <p class="modal-desc-custom" id="customAlertDesc"></p>
+                        <button class="btn-modal-close" onclick="closeCustomAlert()">Đã hiểu</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+            document.getElementById('customAlertDesc').innerText = message;
+            overlay.classList.add('active');
+        }
+
+        function closeCustomAlert() {
+            const overlay = document.getElementById('customAlertOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Copy Clipboard Helper
+        function copyResult(elementId, button) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                button.innerText = 'Đã sao chép!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.innerText = 'Sao chép';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

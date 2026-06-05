@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vigenère Cipher - Thực hành Bảo mật nâng cao</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar-custom">
+        <div class="container-custom" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <a href="/" class="navbar-brand-custom">
+                <img src="https://file1.hutech.edu.vn/file/editor/homepage/stories/hinh34/logo%20CMYK-01.png" alt="HUTECH">
+                <span>MẬT MÃ HỌC</span>
+            </a>
+            <div class="student-badge" id="navbarStudentBadge">
+                <span class="dot"></span>
+                <span id="navbarStudentName">Sinh Viên HUTECH</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-custom">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Vigenère Cipher</h1>
+                <p class="page-subtitle">Mật mã thay thế đa ký tự đối xứng sử dụng chuỗi khóa tuần hoàn</p>
+            </div>
+            <a href="/" class="btn-outline-custom">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại Dashboard
+            </a>
+        </div>
+
+        <!-- Tool Grid -->
+        <div class="tool-grid">
+            <!-- Encryption Card -->
+            <div class="card-custom">
+                <h3 style="font-size: 1.4rem; color: #F59E0B; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-lock"></i> MÃ HÓA (ENCRYPTION)
+                </h3>
+                <form id="encryptForm" method="POST" action="/vigenere_encrypt" onsubmit="handleFormSubmit(event, 'encrypt')">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom" for="encryptPlainText">Bản rõ (Plain text)</label>
+                        <input type="text" class="form-control-custom" id="encryptPlainText" name="inputPlainText" placeholder="Nhập bản rõ cần mã hóa..." required autofocus>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom" for="encryptKey">Từ khóa (Key - chữ cái)</label>
+                        <input type="text" class="form-control-custom" id="encryptKey" name="inputKeyPlain" placeholder="Ví dụ: LEMON" pattern="^[A-Za-z]+$" title="Từ khóa chỉ được chứa các chữ cái từ A đến Z, không chứa số, khoảng trắng hay ký tự đặc biệt!" required>
+                    </div>
+                    <button type="submit" class="btn-gold" style="background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 50%, #92400E 100%); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Tiến hành mã hóa
+                    </button>
+                </form>
+
+                <!-- Encryption Result -->
+                <div class="result-container" id="encryptResultContainer">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="result-title"><i class="fa-solid fa-circle-check"></i> Bản mã kết quả</span>
+                            <button class="btn-copy" onclick="copyResult('encryptResultText', this)">Sao chép</button>
+                        </div>
+                        <div class="result-body" id="encryptResultText"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decryption Card -->
+            <div class="card-custom">
+                <h3 style="font-size: 1.4rem; color: #10B981; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-lock-open"></i> GIẢI MÃ (DECRYPTION)
+                </h3>
+                <form id="decryptForm" method="POST" action="/vigenere_decrypt" onsubmit="handleFormSubmit(event, 'decrypt')">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom" for="decryptCipherText">Bản mã (Cipher text)</label>
+                        <input type="text" class="form-control-custom" id="decryptCipherText" name="inputCipherText" placeholder="Nhập bản mã cần giải mã..." required>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom" for="decryptKey">Từ khóa (Key - chữ cái)</label>
+                        <input type="text" class="form-control-custom" id="decryptKey" name="inputKeyCipher" placeholder="Ví dụ: LEMON" pattern="^[A-Za-z]+$" title="Từ khóa chỉ được chứa các chữ cái từ A đến Z, không chứa số, khoảng trắng hay ký tự đặc biệt!" required>
+                    </div>
+                    <button type="submit" class="btn-gold" style="background: linear-gradient(135deg, #A7F3D0 0%, #10B981 50%, #065F46 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);">
+                        <i class="fa-solid fa-unlock-keyhole"></i> Tiến hành giải mã
+                    </button>
+                </form>
+
+                <!-- Decryption Result -->
+                <div class="result-container" id="decryptResultContainer">
+                    <div class="result-card" style="background: rgba(16, 185, 129, 0.03); border-color: rgba(16, 185, 129, 0.2);">
+                        <div class="result-header">
+                            <span class="result-title" style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Bản rõ kết quả</span>
+                            <button class="btn-copy" onclick="copyResult('decryptResultText', this)">Sao chép</button>
+                        </div>
+                        <div class="result-body" id="decryptResultText"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sync Student Info
+        window.addEventListener('DOMContentLoaded', () => {
+            const studentName = localStorage.getItem('studentName') || 'Sinh Viên HUTECH';
+            const studentID = localStorage.getItem('studentID') || '2380601263';
+            
+            document.getElementById('navbarStudentName').innerText = `${studentName} (${studentID})`;
+        });
+
+        // AJAX Form Submission Handler
+        async function handleFormSubmit(event, mode) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const url = form.action;
+
+            // Validate Vigenere Key: only alphabetic letters allowed
+            const key = formData.get('inputKeyPlain') || formData.get('inputKeyCipher');
+            if (key && !/^[A-Za-z]+$/.test(key)) {
+                showCustomAlert('Nguyên lý Vigenère: Từ khóa (Key) chỉ được phép chứa các chữ cái (A-Z, a-z), không chứa số, khoảng trắng hay ký tự đặc biệt!');
+                return;
+            }
+
+            try {
+                const searchParams = new URLSearchParams();
+                for (const pair of formData.entries()) {
+                    searchParams.append(pair[0], pair[1]);
+                }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: searchParams,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Đã xảy ra lỗi khi kết nối server');
+                }
+
+                const htmlText = await response.text();
+
+                // Extract resulting text from response
+                const match = htmlText.match(/(?:encrypted|decrypted)\s*text:\s*(.*)/i);
+                const result = match ? match[1].trim() : htmlText;
+
+                // Display result
+                const containerId = `${mode}ResultContainer`;
+                const textId = `${mode}ResultText`;
+                
+                document.getElementById(containerId).style.display = 'block';
+                document.getElementById(textId).innerText = result;
+
+            } catch (error) {
+                showCustomAlert(error.message);
+            }
+        }
+
+        // Custom Premium Alert Modal
+        function showCustomAlert(message) {
+            let overlay = document.getElementById('customAlertOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'customAlertOverlay';
+                overlay.className = 'modal-overlay-custom';
+                overlay.innerHTML = `
+                    <div class="modal-box-custom">
+                        <div class="modal-icon-custom"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <h4 class="modal-title-custom">Cảnh báo nguyên lý</h4>
+                        <p class="modal-desc-custom" id="customAlertDesc"></p>
+                        <button class="btn-modal-close" onclick="closeCustomAlert()">Đã hiểu</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+            document.getElementById('customAlertDesc').innerText = message;
+            overlay.classList.add('active');
+        }
+
+        function closeCustomAlert() {
+            const overlay = document.getElementById('customAlertOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Copy Clipboard Helper
+        function copyResult(elementId, button) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                button.innerText = 'Đã sao chép!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.innerText = 'Sao chép';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

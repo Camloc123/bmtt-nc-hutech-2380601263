@@ -3,42 +3,30 @@ class VigenereCipher:
         pass
 
     def vigenere_encrypt(self, plain_text, key):
-        encrypted_text = ""
-        key_index = 0 
-        for char in plain_text:
-            if char.isalpha(): # Sửa lỗi chính tả: isaphla() -> isalpha()
-                key_shift = ord(key[key_index % len(key)].upper()) - ord('A')
-                if char.isupper():
-                    encrypted_text += chr((ord(char) - ord('A') + key_shift) % 26 + ord('A'))
-                else:
-                    encrypted_text += chr((ord(char) - ord('a') + key_shift) % 26 + ord('a'))   
+        # Nguyên tắc cổ điển: Lọc chữ cái và chuyển thành in hoa
+        plain_text = ''.join([c.upper() for c in plain_text if c.isalpha()])
+        key = ''.join([c.upper() for c in key if c.isalpha()])
+        
+        if not plain_text or not key:
+            return ''
+
+        encrypted_text = ''
+        for i, char in enumerate(plain_text):
+            key_shift = ord(key[i % len(key)]) - ord('A')
+            encrypted_text += chr((ord(char) - ord('A') + key_shift) % 26 + ord('A'))
                 
-                # SỬA LỖI: Lùi dòng này ra ngoài, để cả chữ hoa và chữ thường đều tăng key_index
-                key_index += 1
-            else:
-                encrypted_text += char
-                
-        # SỬA LỖI: Lùi lệnh return ra hoàn toàn khỏi vòng lặp for
         return encrypted_text          
     
     def vigenere_decrypt(self, cipher_text, key): 
-        decrypted_text = ""
-        key_index = 0 
-        for char in cipher_text:
-            if char.isalpha():
-                # Tìm khoảng dịch chuyển giống hệt như mã hóa
-                key_shift = ord(key[key_index % len(key)].upper()) - ord('A')
-                
-                if char.isupper():
-                    # Thay vì cộng (+ key_shift), ta trừ đi (- key_shift) để giải mã
-                    decrypted_text += chr((ord(char) - ord('A') - key_shift) % 26 + ord('A'))
-                else:
-                    decrypted_text += chr((ord(char) - ord('a') - key_shift) % 26 + ord('a'))
-                    
-                key_index += 1
-            else:
-                # Giữ nguyên dấu câu và khoảng trắng
-                decrypted_text += char
+        cipher_text = ''.join([c.upper() for c in cipher_text if c.isalpha()])
+        key = ''.join([c.upper() for c in key if c.isalpha()])
+        
+        if not cipher_text or not key:
+            return ''
+
+        decrypted_text = ''
+        for i, char in enumerate(cipher_text):
+            key_shift = ord(key[i % len(key)]) - ord('A')
+            decrypted_text += chr((ord(char) - ord('A') - key_shift) % 26 + ord('A'))
                 
         return decrypted_text
-    

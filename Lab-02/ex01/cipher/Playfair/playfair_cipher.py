@@ -33,8 +33,8 @@ class PlayfairCipher:
         raise ValueError(f"Character {char} not found in matrix.")
 
     def encrypt(self, plaintext):
-        # 3. Chuẩn bị plaintext: xóa khoảng trắng, in hoa, và thay 'J' bằng 'I'
-        plaintext = plaintext.replace(" ", "").upper().replace('J', 'I')
+        # 3. Chuẩn bị plaintext: chuyển thành in hoa, thay 'J' bằng 'I', và lọc chỉ giữ lại chữ cái
+        plaintext = "".join([char for char in plaintext.upper().replace('J', 'I') if char.isalpha()])
         ciphertext = ""
 
         # Process the plaintext in pairs of letters
@@ -69,12 +69,14 @@ class PlayfairCipher:
         return ciphertext
 
     def decrypt(self, ciphertext):
+        # Chuẩn bị ciphertext: chuyển thành in hoa, thay 'J' bằng 'I', và lọc chỉ giữ lại chữ cái
+        ciphertext = "".join([char for char in ciphertext.upper().replace('J', 'I') if char.isalpha()])
         plaintext = ""
         
         i = 0
         while i < len(ciphertext):
             first_letter = ciphertext[i]
-            second_letter = ciphertext[i + 1]
+            second_letter = ciphertext[i + 1] if i + 1 < len(ciphertext) else 'X'
 
             pos1 = self.find_position(first_letter)
             pos2 = self.find_position(second_letter)
@@ -91,3 +93,9 @@ class PlayfairCipher:
             i += 2
             
         return plaintext
+
+    def encrypt_text(self, text, key=None):
+        return self.encrypt(text)
+
+    def decrypt_text(self, text, key=None):
+        return self.decrypt(text)
