@@ -112,18 +112,31 @@
             document.getElementById('navbarStudentName').innerText = `${studentName} (${studentID})`;
         });
 
-        // AJAX Form Submission Handler
+      // AJAX Form Submission Handler
         async function handleFormSubmit(event, mode) {
             event.preventDefault();
             const form = event.target;
             const formData = new FormData(form);
             const url = form.action;
 
-            // Validate Vigenere Key: only alphabetic letters allowed
-            const key = formData.get('inputKeyPlain') || formData.get('inputKeyCipher');
+            // 1. Lấy giá trị input dựa theo chế độ mã hóa (mode) hoặc giải mã (mode)
+            const plainOrCipherText = mode === 'encrypt' 
+                ? formData.get('inputPlainText') 
+                : formData.get('inputCipherText');
+            const key = mode === 'encrypt' 
+                ? formData.get('inputKeyPlain') 
+                : formData.get('inputKeyCipher');
+
+            // 2. Validate Vigenere Key: chỉ cho phép ký tự chữ cái
             if (key && !/^[A-Za-z]+$/.test(key)) {
                 showCustomAlert('Nguyên lý Vigenère: Từ khóa (Key) chỉ được phép chứa các chữ cái (A-Z, a-z), không chứa số, khoảng trắng hay ký tự đặc biệt!');
                 return;
+            }
+
+            // 3. CẢNH BÁO MỚI: Kiểm tra độ dài khóa (Key) so với văn bản gốc
+            if (plainOrCipherText && key && key.length > plainOrCipherText.length) {
+                showCustomAlert(`Cảnh báo nguyên lý: Độ dài của từ khóa (Key: ${key.length} ký tự) đang dài hơn văn bản cần xử lý (${plainOrCipherText.length} ký tự). Trong mật mã Vigenère tuần hoàn, khóa thường ngắn hơn hoặc bằng văn bản để lặp lại chu kỳ khóa một cách tối ưu!`);
+                return; // Ngăn không cho gửi dữ liệu lên server nếu vi phạm
             }
 
             try {

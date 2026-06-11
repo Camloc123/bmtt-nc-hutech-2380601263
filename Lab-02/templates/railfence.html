@@ -112,63 +112,115 @@
             document.getElementById('navbarStudentName').innerText = `${studentName} (${studentID})`;
         });
 
-        // AJAX Form Submission Handler
-        async function handleFormSubmit(event, mode) {
-            event.preventDefault();
-            const form = event.target;
-            const formData = new FormData(form);
-            const url = form.action;
+       // AJAX Form Submission Handler
+async function handleFormSubmit(event, mode) {
+    event.preventDefault();
 
-            // Validate Rail Fence Key (must be integer >= 2)
-            const rawKey = formData.get('inputKeyPlain') || formData.get('inputKeyCipher');
-            const key = parseInt(rawKey, 10);
-            if (isNaN(key) || key < 2) {
-                showCustomAlert('Nguyên lý Rail Fence: Số hàng ray (Key) phải là một số nguyên lớn hơn hoặc bằng 2!');
-                return;
-            }
+    const form = event.target;
+    const formData = new FormData(form);
+    const url = form.action;
 
-            const text = formData.get('inputPlainText') || formData.get('inputCipherText') || '';
-            if (key >= text.length && text.length > 0) {
-                showCustomAlert(`Nguyên lý Rail Fence: Số hàng ray (${key}) không được lớn hơn hoặc bằng độ dài chuỗi ký tự (${text.length}), vì nếu không thì chuỗi ký tự sẽ không được hoán vị và giữ nguyên!`);
-                return;
-            }
+    // Lấy key
+    const rawKey =
+        formData.get('inputKeyPlain') ||
+        formData.get('inputKeyCipher');
 
-            try {
-                const searchParams = new URLSearchParams();
-                for (const pair of formData.entries()) {
-                    searchParams.append(pair[0], pair[1]);
-                }
+    const key = parseInt(rawKey, 10);
 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: searchParams,
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                });
+    // Kiểm tra key
+    if (isNaN(key)) {
+        showCustomAlert(
+            'Nguyên lý Rail Fence: Key phải là một số nguyên!'
+        );
+        return;
+    }
 
-                if (!response.ok) {
-                    throw new Error('Đã xảy ra lỗi khi kết nối server');
-                }
+    if (key <= 1) {
+        showCustomAlert(
+            'Nguyên lý Rail Fence: Số hàng ray (Key) phải lớn hơn 1!'
+        );
+        return;
+    }
 
-                const htmlText = await response.text();
+    // Lấy văn bản
+    const text =
+        formData.get('inputPlainText') ||
+        formData.get('inputCipherText') ||
+        '';
 
-                // Extract resulting text from response
-                const match = htmlText.match(/(?:encrypted|decrypted)\s*text:\s*(.*)/i);
-                const result = match ? match[1].trim() : htmlText;
+    // Kiểm tra rỗng
+    if (!text.trim()) {
+        showCustomAlert(
+            'Nguyên lý Rail Fence: Văn bản không được để trống!'
+        );
+        return;
+    }
 
-                // Display result
-                const containerId = `${mode}ResultContainer`;
-                const textId = `${mode}ResultText`;
-                
-                document.getElementById(containerId).style.display = 'block';
-                document.getElementById(textId).innerText = result;
+    // Không cho phép khoảng trắng
+    if (text.includes(' ')) {
+        showCustomAlert(
+            'Nguyên lý Rail Fence: Văn bản không được chứa khoảng trắng. Vui lòng xóa khoảng trắng trước khi mã hóa hoặc giải mã!'
+        );
+        return;
+    }
 
-            } catch (error) {
-                showCustomAlert(error.message);
-            }
+    // Không cho phép số
+    if (/[0-9]/.test(text)) {
+        showCustomAlert(
+            'Nguyên lý Rail Fence: Văn bản không được chứa chữ số!'
+        );
+        return;
+    }
+
+    // Không cho phép ký tự đặc biệt
+    if (!/^[A-Za-z]+$/.test(text)) {
+        showCustomAlert(
+            'Nguyên lý Rail Fence: Chỉ được nhập các chữ cái từ A-Z, không được chứa ký tự đặc biệt!'
+        );
+        return;
+    }
+
+    // Kiểm tra key so với độ dài chuỗi
+    if (key >= text.length) {
+        showCustomAlert(
+            `Nguyên lý Rail Fence: Số hàng ray (${key}) không được lớn hơn hoặc bằng độ dài chuỗi ký tự (${text.length})!`
+        );
+        return;
+    }
+
+    try {
+        const searchParams = new URLSearchParams();
+
+        for (const pair of formData.entries()) {
+            searchParams.append(pair[0], pair[1]);
         }
 
+        const response = await fetch(url, {
+            method: 'POST',
+            body: searchParams,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        const result = await response.text();
+
+        if (!response.ok) {
+            throw new Error(result);
+        }
+
+        const containerId = `${mode}ResultContainer`;
+        const textId = `${mode}ResultText`;
+
+        document.getElementById(containerId).style.display = 'block';
+        document.getElementById(textId).innerText = result;
+
+    } catch (error) {
+        showCustomAlert(
+            error.message || 'Đã xảy ra lỗi khi kết nối tới máy chủ!'
+        );
+    }
+}
         // Custom Premium Alert Modal
         function showCustomAlert(message) {
             let overlay = document.getElementById('customAlertOverlay');

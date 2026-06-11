@@ -1,97 +1,158 @@
 class PlayfairCipher:
     def __init__(self, key):
-        # 1. Chuyển key thành in hoa và thay 'J' bằng 'I' để đồng bộ
+
+        # ===== KIỂM TRA KEY =====
+        if not key or not str(key).strip():
+            raise ValueError(
+                "Playfair Cipher: Key không được để trống."
+            )
+
+        if not str(key).replace(" ", "").isalpha():
+            raise ValueError(
+                "Playfair Cipher: Key chỉ được chứa các chữ cái A-Z, không được chứa số hoặc ký tự đặc biệt."
+            )
+
         self.key = key.upper().replace('J', 'I')
         self.matrix = self.create_matrix()
 
     def create_matrix(self):
-        # Create a 5x5 matrix for the Playfair cipher
         matrix = []
         used_letters = set()
 
-        # Add letters from the key to the matrix
         for char in self.key:
             if char not in used_letters and char.isalpha():
                 used_letters.add(char)
                 matrix.append(char)
 
-        # Add remaining letters of the alphabet (excluding 'J')
         for char in 'ABCDEFGHIKLMNOPQRSTUVWXYZ':
             if char not in used_letters:
                 used_letters.add(char)
                 matrix.append(char)
 
-        # Convert the list to a 5x5 matrix
         return [matrix[i:i + 5] for i in range(0, 25, 5)]
 
-    # 2. Bổ sung hàm tìm vị trí (row, col) của ký tự trong ma trận
     def find_position(self, char):
         for row in range(5):
             for col in range(5):
                 if self.matrix[row][col] == char:
                     return (row, col)
-        raise ValueError(f"Character {char} not found in matrix.")
+
+        raise ValueError(
+            f"Playfair Cipher: Không tìm thấy ký tự {char} trong ma trận."
+        )
 
     def encrypt(self, plaintext):
-        # 3. Chuẩn bị plaintext: chuyển thành in hoa, thay 'J' bằng 'I', và lọc chỉ giữ lại chữ cái
-        plaintext = "".join([char for char in plaintext.upper().replace('J', 'I') if char.isalpha()])
+
+        # ===== KIỂM TRA PLAINTEXT =====
+        if not plaintext or not str(plaintext).strip():
+            raise ValueError(
+                "Playfair Cipher: Plain Text không được để trống."
+            )
+
+        if not str(plaintext).replace(" ", "").isalpha():
+            raise ValueError(
+                "Playfair Cipher: Plain Text chỉ được chứa các chữ cái A-Z, không được chứa số hoặc ký tự đặc biệt."
+            )
+
+        plaintext = "".join(
+            [
+                char
+                for char in plaintext.upper().replace('J', 'I')
+                if char.isalpha()
+            ]
+        )
+
         ciphertext = ""
-
-        # Process the plaintext in pairs of letters
         i = 0
-        while i < len(plaintext):
-            first_letter = plaintext[i]
-            second_letter = plaintext[i + 1] if i + 1 < len(plaintext) else 'X'
 
-            # 4. Xử lý triệt để nếu 2 chữ cái giống nhau
+        while i < len(plaintext):
+
+            first_letter = plaintext[i]
+
+            if i + 1 < len(plaintext):
+                second_letter = plaintext[i + 1]
+            else:
+                second_letter = 'X'
+
             if first_letter == second_letter:
-                # Nếu chữ cái trùng là 'X', ta dùng 'Q' để chèn thay vì 'X'
                 second_letter = 'Q' if first_letter == 'X' else 'X'
                 i += 1
             else:
                 i += 2
 
-            # Find the positions of the letters in the matrix
             pos1 = self.find_position(first_letter)
             pos2 = self.find_position(second_letter)
 
-            # Encrypt the letters based on their positions
-            if pos1[0] == pos2[0]:  # Same row
+            if pos1[0] == pos2[0]:
+
                 ciphertext += self.matrix[pos1[0]][(pos1[1] + 1) % 5]
                 ciphertext += self.matrix[pos2[0]][(pos2[1] + 1) % 5]
-            elif pos1[1] == pos2[1]:  # Same column
+
+            elif pos1[1] == pos2[1]:
+
                 ciphertext += self.matrix[(pos1[0] + 1) % 5][pos1[1]]
                 ciphertext += self.matrix[(pos2[0] + 1) % 5][pos2[1]]
-            else:  # Rectangle
+
+            else:
+
                 ciphertext += self.matrix[pos1[0]][pos2[1]]
                 ciphertext += self.matrix[pos2[0]][pos1[1]]
 
         return ciphertext
 
     def decrypt(self, ciphertext):
-        # Chuẩn bị ciphertext: chuyển thành in hoa, thay 'J' bằng 'I', và lọc chỉ giữ lại chữ cái
-        ciphertext = "".join([char for char in ciphertext.upper().replace('J', 'I') if char.isalpha()])
+
+        # ===== KIỂM TRA CIPHERTEXT =====
+        if not ciphertext or not str(ciphertext).strip():
+            raise ValueError(
+                "Playfair Cipher: Cipher Text không được để trống."
+            )
+
+        if not str(ciphertext).replace(" ", "").isalpha():
+            raise ValueError(
+                "Playfair Cipher: Cipher Text chỉ được chứa các chữ cái A-Z, không được chứa số hoặc ký tự đặc biệt."
+            )
+
+        ciphertext = "".join(
+            [
+                char
+                for char in ciphertext.upper().replace('J', 'I')
+                if char.isalpha()
+            ]
+        )
+
         plaintext = ""
-        
         i = 0
+
         while i < len(ciphertext):
+
             first_letter = ciphertext[i]
-            second_letter = ciphertext[i + 1] if i + 1 < len(ciphertext) else 'X'
+
+            if i + 1 < len(ciphertext):
+                second_letter = ciphertext[i + 1]
+            else:
+                second_letter = 'X'
 
             pos1 = self.find_position(first_letter)
             pos2 = self.find_position(second_letter)
 
-            if pos1[0] == pos2[0]:  # Same row
+            if pos1[0] == pos2[0]:
+
                 plaintext += self.matrix[pos1[0]][(pos1[1] - 1) % 5]
                 plaintext += self.matrix[pos2[0]][(pos2[1] - 1) % 5]
-            elif pos1[1] == pos2[1]:  # Same column
+
+            elif pos1[1] == pos2[1]:
+
                 plaintext += self.matrix[(pos1[0] - 1) % 5][pos1[1]]
                 plaintext += self.matrix[(pos2[0] - 1) % 5][pos2[1]]
-            else:  # Rectangle
+
+            else:
+
                 plaintext += self.matrix[pos1[0]][pos2[1]]
                 plaintext += self.matrix[pos2[0]][pos1[1]]
+
             i += 2
-            
+
         return plaintext
 
     def encrypt_text(self, text, key=None):

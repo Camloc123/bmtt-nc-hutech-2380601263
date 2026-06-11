@@ -69,6 +69,38 @@ def playfair_decrypt():
     return f"text: {text}<br/>key: {key}<br/>decrypted text: {decrypted_text}"
 
 
+@app.route("/api/playfair/encrypt", methods=['POST'])
+def api_playfair_encrypt():
+    try:
+        text = request.form.get('inputPlainText', '')
+        key = request.form.get('inputKeyPlain', '')
+        
+        if not key.strip():
+            return json.jsonify({"error": "Playfair Cipher: Key không được để trống."}), 400
+            
+        Playfair = PlayfairCipher(key)
+        encrypted_text = Playfair.encrypt(text)
+        return json.jsonify({"encrypted_message": encrypted_text})
+    except Exception as e:
+        return json.jsonify({"error": str(e)}), 400
+
+@app.route("/api/playfair/decrypt", methods=['POST'])
+def api_playfair_decrypt():
+    try:
+        text = request.form.get('inputCipherText', '')
+        key = request.form.get('inputKeyCipher', '')
+        
+        if not key.strip():
+            return json.jsonify({"error": "Playfair Cipher: Key không được để trống."}), 400
+            
+        Playfair = PlayfairCipher(key)
+        decrypted_text = Playfair.decrypt(text)
+        return json.jsonify({"decrypted_message": decrypted_text})
+    except Exception as e:
+        return json.jsonify({"error": str(e)}), 400
+
+
+
 # ==========================================
 # ROUTES FOR VIGENERE CIPHER
 # ==========================================
@@ -109,7 +141,7 @@ def railfence_encrypt():
         return "Key must be an integer"
     RailFence = RailFenceCipher()
     encrypted_text = RailFence.railfence_encrypt(text, key)
-    return f"text: {text}<br/>key: {key}<br/>encrypted text: {encrypted_text}"
+    return encrypted_text
 
 @app.route("/railfence_decrypt", methods=['POST'])
 def railfence_decrypt():
@@ -120,7 +152,7 @@ def railfence_decrypt():
         return "Key must be an integer"
     RailFence = RailFenceCipher()
     decrypted_text = RailFence.railfence_decrypt(text, key)
-    return f"text: {text}<br/>key: {key}<br/>decrypted text: {decrypted_text}"
+    return decrypted_text
 
 # ==========================================
 # MAIN FUNCTION

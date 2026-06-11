@@ -119,16 +119,24 @@
             const formData = new FormData(form);
             const url = form.action;
 
-            // Validate Caesar Key (must be integer)
+            // 1. Validate Caesar Key (must be integer)
             const rawKey = formData.get('inputKeyPlain') || formData.get('inputKeyCipher');
             const key = parseInt(rawKey, 10);
+            
             if (isNaN(key)) {
                 showCustomAlert('Nguyên lý Caesar: Khóa dịch chuyển (Key) phải là một số nguyên!');
                 return;
             }
 
+            // 2. CẢNH BÁO MỚI: Kiểm tra khóa 0 hoặc 26
+            // Trong Caesar, khóa 0 hoặc 26 sẽ giữ nguyên văn bản, không có tính bảo mật
+            if (key === 0 || key === 26) {
+                showCustomAlert(`Cảnh báo nguyên lý: Khóa ${key} không tạo ra sự thay đổi nào cho bản rõ/bản mã. Trong mật mã Caesar, khóa này không có tính bảo mật vì văn bản sau khi xử lý sẽ giữ nguyên như ban đầu.`);
+                return; // Ngăn chặn việc gửi request lên server
+            }
+
             try {
-                // Convert FormData to URL Encoded because Flask request.form expects x-www-form-urlencoded
+                // ... giữ nguyên phần code fetch phía dưới ...
                 const searchParams = new URLSearchParams();
                 for (const pair of formData.entries()) {
                     searchParams.append(pair[0], pair[1]);
@@ -147,13 +155,9 @@
                 }
 
                 const htmlText = await response.text();
-
-                // Extract resulting text from response
-                // Response format is usually: text: xxx<br/>key: xxx<br/>(encrypted|decrypted) text: RESULT
                 const match = htmlText.match(/(?:encrypted|decrypted)\s*text:\s*(.*)/i);
                 const result = match ? match[1].trim() : htmlText;
 
-                // Display result container
                 const containerId = `${mode}ResultContainer`;
                 const textId = `${mode}ResultText`;
                 
@@ -164,7 +168,6 @@
                 showCustomAlert(error.message);
             }
         }
-
         // Custom Premium Alert Modal
         function showCustomAlert(message) {
             let overlay = document.getElementById('customAlertOverlay');

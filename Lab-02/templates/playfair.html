@@ -76,7 +76,7 @@
                     <h3 style="font-size: 1.4rem; color: #A855F7; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
                         <i class="fa-solid fa-lock"></i> MÃ HÓA (ENCRYPTION)
                     </h3>
-                    <form id="encryptForm" method="POST" action="/playfair_encrypt" onsubmit="handleFormSubmit(event, 'encrypt')">
+                   <form id="encryptForm" method="POST" action="/api/playfair/encrypt" onsubmit="handleFormSubmit(event, 'encrypt')">
                         <div class="form-group-custom">
                             <label class="form-label-custom" for="encryptPlainText">Bản rõ (Plain text)</label>
                             <input type="text" class="form-control-custom" id="encryptPlainText" name="inputPlainText" placeholder="Nhập bản rõ cần mã hóa..." required autofocus>
@@ -107,7 +107,7 @@
                     <h3 style="font-size: 1.4rem; color: #10B981; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
                         <i class="fa-solid fa-lock-open"></i> GIẢI MÃ (DECRYPTION)
                     </h3>
-                    <form id="decryptForm" method="POST" action="/playfair_decrypt" onsubmit="handleFormSubmit(event, 'decrypt')">
+                    <form id="decryptForm" method="POST" action="/api/playfair/decrypt" onsubmit="handleFormSubmit(event, 'decrypt')">
                         <div class="form-group-custom">
                             <label class="form-label-custom" for="decryptCipherText">Bản mã (Cipher text)</label>
                             <input type="text" class="form-control-custom" id="decryptCipherText" name="inputCipherText" placeholder="Nhập bản mã cần giải mã..." required>
@@ -202,77 +202,98 @@
             });
         }
 
-        // AJAX Form Submission
         async function handleFormSubmit(event, mode) {
-            event.preventDefault();
-            const form = event.target;
-            const formData = new FormData(form);
-            const url = form.action;
+    event.preventDefault();
 
-            // Enforce Playfair constraints
-            const key = formData.get('inputKeyPlain') || formData.get('inputKeyCipher');
-            const cleanKey = (key || '').replace(/[^A-Za-z]/g, '');
-            if (cleanKey.length === 0) {
-                showCustomAlert('Nguyên lý Playfair: Khóa chữ phải chứa ít nhất một chữ cái (A-Z, a-z)!');
-                return;
-            }
+    const form = event.target;
+    const formData = new FormData(form);
+    const url = form.action;
 
-            if (mode === 'encrypt') {
-                const plainText = formData.get('inputPlainText') || '';
-                const cleanPlainText = plainText.replace(/[^A-Za-z]/g, '');
-                if (cleanPlainText.length === 0) {
-                    showCustomAlert('Nguyên lý Playfair: Bản rõ phải chứa ít nhất một chữ cái (A-Z, a-z)!');
-                    return;
-                }
-            } else if (mode === 'decrypt') {
-                const cipherText = formData.get('inputCipherText') || '';
-                const cleanCipherText = cipherText.replace(/[^A-Za-z]/g, '');
-                if (cleanCipherText.length === 0) {
-                    showCustomAlert('Nguyên lý Playfair: Bản mã phải chứa ít nhất một chữ cái (A-Z, a-z)!');
-                    return;
-                }
-                if (cleanCipherText.length % 2 !== 0) {
-                    showCustomAlert('Nguyên lý Playfair: Bản mã hợp lệ phải có số lượng chữ cái là số chẵn để ghép đôi! Vui lòng kiểm tra lại.');
-                    return;
-                }
-            }
+    // ===== VALIDATE FRONTEND =====
+    const key = formData.get(mode === 'encrypt' ? 'inputKeyPlain' : 'inputKeyCipher') || '';
+    const cleanKey = key.replace(/[^A-Za-z]/g, '');
 
-            try {
-                const searchParams = new URLSearchParams();
-                for (const pair of formData.entries()) {
-                    searchParams.append(pair[0], pair[1]);
-                }
+    if (!cleanKey) {
+        showCustomAlert("Playfair Cipher: Key không được để trống.");
+        return;
+    }
 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: searchParams,
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                });
+    if (!/^[A-Za-z]+$/.test(cleanKey)) {
+        showCustomAlert("Playfair Cipher: Key chỉ được chứa chữ cái A-Z.");
+        return;
+    }
 
-                if (!response.ok) {
-                    throw new Error('Đã xảy ra lỗi khi kết nối server');
-                }
+    if (mode === 'encrypt') {
+        const plainText = formData.get("inputPlainText") || '';
+        const cleanPlain = plainText.replace(/[^A-Za-z]/g, '');
 
-                const htmlText = await response.text();
-
-                // Extract resulting text from response
-                const match = htmlText.match(/(?:encrypted|decrypted)\s*text:\s*(.*)/i);
-                const result = match ? match[1].trim() : htmlText;
-
-                // Display result
-                const containerId = `${mode}ResultContainer`;
-                const textId = `${mode}ResultText`;
-                
-                document.getElementById(containerId).style.display = 'block';
-                document.getElementById(textId).innerText = result;
-
-            } catch (error) {
-                showCustomAlert(error.message);
-            }
+        if (!cleanPlain) {
+            showCustomAlert("Playfair Cipher: Plain Text không được để trống.");
+            return;
         }
 
+        if (!/^[A-Za-z]+$/.test(cleanPlain)) {
+            showCustomAlert("Playfair Cipher: Plain Text chỉ được chứa chữ cái A-Z.");
+            return;
+        }
+    }
+
+    if (mode === 'decrypt') {
+        const cipherText = formData.get("inputCipherText") || '';
+        const cleanCipher = cipherText.replace(/[^A-Za-z]/g, '');
+
+        if (!cleanCipher) {
+            showCustomAlert("Playfair Cipher: Cipher Text không được để trống.");
+            return;
+        }
+
+        if (!/^[A-Za-z]+$/.test(cleanCipher)) {
+            showCustomAlert("Playfair Cipher: Cipher Text chỉ được chứa chữ cái A-Z.");
+            return;
+        }
+
+        if (cleanCipher.length % 2 !== 0) {
+            showCustomAlert("Playfair Cipher: Cipher Text phải có độ dài chẵn.");
+            return;
+        }
+    }
+
+    // ===== CALL API =====
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+        console.log("API Response:", data);
+
+        if (data.error) {
+            showCustomAlert(data.error);
+            return;
+        }
+
+        const containerId = mode === 'encrypt'
+            ? "encryptResultContainer"
+            : "decryptResultContainer";
+
+        const textId = mode === 'encrypt'
+            ? "encryptResultText"
+            : "decryptResultText";
+
+        document.getElementById(containerId).style.display = "block";
+
+        document.getElementById(textId).innerText =
+            mode === "encrypt"
+                ? data.encrypted_message
+                : data.decrypted_message;
+
+    } catch (error) {
+        console.error("Fetch error:", error);
+        alert("Lỗi kết nối hoặc xử lý: " + error.message);
+        showCustomAlert("Lỗi kết nối server: " + error.message);
+    }
+}
         // Custom Premium Alert Modal
         function showCustomAlert(message) {
             let overlay = document.getElementById('customAlertOverlay');
