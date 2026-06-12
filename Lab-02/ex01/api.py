@@ -61,7 +61,8 @@ def caesar_encrypt():
         )
 
         return jsonify({
-            "encrypted_message": encrypted_text
+            "encrypted_message": encrypted_text,
+            "encrypted_text": encrypted_text
         }), 200
 
     except Exception as e:
@@ -111,7 +112,8 @@ def caesar_decrypt():
         )
 
         return jsonify({
-            "decrypted_message": decrypted_text
+            "decrypted_message": decrypted_text,
+            "decrypted_text": decrypted_text
         }), 200
 
     except Exception as e:
@@ -144,7 +146,8 @@ def vigenere_encrypt():
         return jsonify({
             "plain_text": plain_text,
             "key": key,
-            "encrypted_message": encrypted_text
+            "encrypted_message": encrypted_text,
+            "encrypted_text": encrypted_text
         }), 200
 
     except ValueError as e:
@@ -184,7 +187,8 @@ def vigenere_decrypt():
         return jsonify({
             "cipher_text": cipher_text,
             "key": key,
-            "decrypted_message": decrypted_text
+            "decrypted_message": decrypted_text,
+            "decrypted_text": decrypted_text
         }), 200
 
     except ValueError as e:
@@ -233,7 +237,8 @@ def railfence_encrypt():
         )
 
         return jsonify({
-            'encrypted_message': encrypted_text
+            'encrypted_message': encrypted_text,
+            'encrypted_text': encrypted_text
         }), 200
 
     except ValueError as e:
@@ -282,7 +287,8 @@ def railfence_decrypt():
         )
 
         return jsonify({
-            'decrypted_message': decrypted_text
+            'decrypted_message': decrypted_text,
+            'decrypted_text': decrypted_text
         }), 200
 
     except ValueError as e:
@@ -297,23 +303,26 @@ def railfence_decrypt():
 @app.route("/api/playfair/encrypt", methods=["POST"])
 def playfair_encrypt():
     try:
-        data = request.form
+        if request.is_json:
+            data = request.get_json() or {}
+        else:
+            data = request.form or {}
 
-        plain_text = data.get("inputPlainText")
-        key = data.get("inputKeyPlain")
+        plain_text = data.get("inputPlainText") or data.get("plain_text")
+        key = data.get("inputKeyPlain") or data.get("key")
 
-        if not key or key.strip() == "":
+        if not key or str(key).strip() == "":
             raise ValueError("Playfair Cipher: Key không được để trống.")
 
-        key = key.replace(" ", "").upper()
+        key = str(key).replace(" ", "").upper()
 
         if not key.isalpha():
             raise ValueError("Playfair Cipher: Key chỉ được chứa chữ cái A-Z.")
 
-        if not plain_text or plain_text.strip() == "":
+        if not plain_text or str(plain_text).strip() == "":
             raise ValueError("Playfair Cipher: Plain Text không được để trống.")
 
-        plain_text = plain_text.replace(" ", "").upper()
+        plain_text = str(plain_text).replace(" ", "").upper()
 
         if not plain_text.isalpha():
             raise ValueError("Playfair Cipher: Plain Text chỉ được chứa chữ cái A-Z.")
@@ -322,7 +331,9 @@ def playfair_encrypt():
         encrypted_text = pf_cipher.encrypt(plain_text)
 
         return jsonify({
-            "encrypted_message": encrypted_text
+            "encrypted_message": encrypted_text,
+            "encrypted_text": encrypted_text,
+            "warnings": pf_cipher.warnings
         })
 
     except ValueError as e:
@@ -333,23 +344,26 @@ def playfair_encrypt():
 @app.route("/api/playfair/decrypt", methods=["POST"])
 def playfair_decrypt():
     try:
-        data = request.form
+        if request.is_json:
+            data = request.get_json() or {}
+        else:
+            data = request.form or {}
 
-        cipher_text = data.get("inputCipherText")
-        key = data.get("inputKeyCipher")
+        cipher_text = data.get("inputCipherText") or data.get("cipher_text")
+        key = data.get("inputKeyCipher") or data.get("key")
 
-        if not key or key.strip() == "":
+        if not key or str(key).strip() == "":
             raise ValueError("Playfair Cipher: Key không được để trống.")
 
-        key = key.replace(" ", "").upper()
+        key = str(key).replace(" ", "").upper()
 
         if not key.isalpha():
             raise ValueError("Playfair Cipher: Key chỉ được chứa chữ cái A-Z.")
 
-        if not cipher_text or cipher_text.strip() == "":
+        if not cipher_text or str(cipher_text).strip() == "":
             raise ValueError("Playfair Cipher: Cipher Text không được để trống.")
 
-        cipher_text = cipher_text.replace(" ", "").upper()
+        cipher_text = str(cipher_text).replace(" ", "").upper()
 
         if not cipher_text.isalpha():
             raise ValueError("Playfair Cipher: Cipher Text chỉ được chứa chữ cái A-Z.")
@@ -361,7 +375,8 @@ def playfair_decrypt():
         decrypted_text = pf_cipher.decrypt(cipher_text)
 
         return jsonify({
-            "decrypted_message": decrypted_text
+            "decrypted_message": decrypted_text,
+            "decrypted_text": decrypted_text
         })
 
     except ValueError as e:
@@ -372,13 +387,16 @@ def playfair_decrypt():
 @app.route("/api/playfair/creatematrix", methods=["POST"])
 def playfair_creatematrix():
     try:
-        data = request.form
+        if request.is_json:
+            data = request.get_json() or {}
+        else:
+            data = request.form or {}
         key = data.get("key")
 
-        if not key or key.strip() == "":
+        if not key or str(key).strip() == "":
             raise ValueError("Playfair Cipher: Key không được để trống.")
 
-        key = key.replace(" ", "").upper()
+        key = str(key).replace(" ", "").upper()
 
         if not key.isalpha():
             raise ValueError("Playfair Cipher: Key chỉ được chứa chữ cái A-Z.")

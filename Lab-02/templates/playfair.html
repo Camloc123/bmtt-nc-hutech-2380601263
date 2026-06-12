@@ -99,6 +99,18 @@
                             </div>
                             <div class="result-body" id="encryptResultText"></div>
                         </div>
+
+                        <!-- Warnings Container -->
+                        <div class="warnings-card" id="encryptWarningsContainer" style="display: none; margin-top: 15px; background: rgba(212, 175, 55, 0.03); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                            <div class="warnings-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                <span class="warnings-title" style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; color: var(--gold); display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> LỊCH SỬ CHỈNH SỬA TỰ ĐỘNG
+                                </span>
+                            </div>
+                            <ul id="encryptWarningsList" style="list-style-type: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-size: 0.92rem; color: var(--text-secondary); line-height: 1.4;">
+                                <!-- Warnings will be inserted here -->
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -288,6 +300,40 @@
                 ? data.encrypted_message
                 : data.decrypted_message;
 
+        if (mode === 'encrypt') {
+            const warningsContainer = document.getElementById("encryptWarningsContainer");
+            const warningsList = document.getElementById("encryptWarningsList");
+            if (warningsContainer && warningsList) {
+                if (data.warnings && data.warnings.length > 0) {
+                    warningsList.innerHTML = "";
+                    data.warnings.forEach(warn => {
+                        const li = document.createElement("li");
+                        li.style.display = "flex";
+                        li.style.alignItems = "flex-start";
+                        li.style.gap = "8px";
+                        li.style.lineHeight = "1.5";
+                        
+                        let textPart = warn;
+                        if (warn.startsWith("⚠️")) {
+                            textPart = warn.replace("⚠️", "").trim();
+                        }
+                        li.innerHTML = `<span style="color: var(--gold); flex-shrink: 0;">⚠️</span><span>${textPart}</span>`;
+                        warningsList.appendChild(li);
+                    });
+                    warningsContainer.style.display = "block";
+                    showWarningsModal(data.warnings);
+                } else {
+                    warningsContainer.style.display = "none";
+                }
+            }
+        } else {
+            // Hide warnings container on decryption mode
+            const warningsContainer = document.getElementById("encryptWarningsContainer");
+            if (warningsContainer) {
+                warningsContainer.style.display = "none";
+            }
+        }
+
     } catch (error) {
         console.error("Fetch error:", error);
         alert("Lỗi kết nối hoặc xử lý: " + error.message);
@@ -317,6 +363,53 @@
 
         function closeCustomAlert() {
             const overlay = document.getElementById('customAlertOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Custom Premium Modal for Cipher Edit History Warnings
+        function showWarningsModal(warnings) {
+            let overlay = document.getElementById('warningsModalOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'warningsModalOverlay';
+                overlay.className = 'modal-overlay-custom';
+                overlay.innerHTML = `
+                    <div class="modal-box-custom" style="border-color: rgba(212, 175, 55, 0.4); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 175, 55, 0.15);">
+                        <div class="modal-icon-custom" style="color: var(--gold); text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <h4 class="modal-title-custom" style="background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LỊCH SỬ CHỈNH SỬA TỰ ĐỘNG</h4>
+                        <div class="modal-desc-custom" id="warningsModalDesc" style="text-align: left; margin-bottom: 25px;">
+                            <ul id="warningsModalList" style="list-style-type: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.4;">
+                            </ul>
+                        </div>
+                        <button class="btn-modal-close" style="background: var(--gold-gradient); color: #08090E; font-weight: 700; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);" onclick="closeWarningsModal()">Đã hiểu</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+            
+            const list = document.getElementById('warningsModalList');
+            list.innerHTML = "";
+            warnings.forEach(warn => {
+                const li = document.createElement("li");
+                li.style.display = "flex";
+                li.style.alignItems = "flex-start";
+                li.style.gap = "8px";
+                
+                let textPart = warn;
+                if (warn.startsWith("⚠️")) {
+                    textPart = warn.replace("⚠️", "").trim();
+                }
+                li.innerHTML = `<span style="color: var(--gold); flex-shrink: 0;">⚠️</span><span>${textPart}</span>`;
+                list.appendChild(li);
+            });
+            
+            overlay.classList.add('active');
+        }
+
+        function closeWarningsModal() {
+            const overlay = document.getElementById('warningsModalOverlay');
             if (overlay) {
                 overlay.classList.remove('active');
             }

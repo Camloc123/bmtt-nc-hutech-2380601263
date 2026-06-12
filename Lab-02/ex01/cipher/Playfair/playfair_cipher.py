@@ -1,5 +1,6 @@
 class PlayfairCipher:
     def __init__(self, key):
+        self.init_warnings = [] # Dùng để lưu cảnh báo riêng của Key
 
         # ===== KIỂM TRA KEY =====
         if not key or not str(key).strip():
@@ -12,8 +13,13 @@ class PlayfairCipher:
                 "Playfair Cipher: Key chỉ được chứa các chữ cái A-Z, không được chứa số hoặc ký tự đặc biệt."
             )
 
+        # Cảnh báo nếu Key có chữ J
+        if 'J' in str(key).upper():
+            self.init_warnings.append("⚠️ Từ khóa chứa chữ 'J', hệ thống đã tự động chuyển thành 'I'.")
+
         self.key = key.upper().replace('J', 'I')
         self.matrix = self.create_matrix()
+        self.warnings = [] # Khởi tạo danh sách cảnh báo cho quá trình mã hóa
 
     def create_matrix(self):
         matrix = []
@@ -42,6 +48,8 @@ class PlayfairCipher:
         )
 
     def encrypt(self, plaintext):
+        # Nạp cảnh báo của Key vào danh sách cảnh báo chung mỗi lần mã hóa
+        self.warnings = list(self.init_warnings)
 
         # ===== KIỂM TRA PLAINTEXT =====
         if not plaintext or not str(plaintext).strip():
@@ -53,6 +61,10 @@ class PlayfairCipher:
             raise ValueError(
                 "Playfair Cipher: Plain Text chỉ được chứa các chữ cái A-Z, không được chứa số hoặc ký tự đặc biệt."
             )
+
+        # Cảnh báo nếu Plaintext có chữ J
+        if 'J' in str(plaintext).upper():
+            self.warnings.append("⚠️ Bản rõ chứa chữ 'J', hệ thống đã tự động chuyển thành 'I'.")
 
         plaintext = "".join(
             [
@@ -73,9 +85,14 @@ class PlayfairCipher:
                 second_letter = plaintext[i + 1]
             else:
                 second_letter = 'X'
+                # Cảnh báo: Ký tự bị lẻ ở cuối
+                self.warnings.append(f"⚠️ Chữ '{first_letter}' đứng một mình ở cuối, hệ thống tự động chèn thêm 'X'.")
 
             if first_letter == second_letter:
-                second_letter = 'Q' if first_letter == 'X' else 'X'
+                inserted_char = 'Q' if first_letter == 'X' else 'X'
+                second_letter = inserted_char
+                # Cảnh báo: 2 chữ cái trùng nhau
+                self.warnings.append(f"⚠️ Cặp '{first_letter}{first_letter}' trùng nhau, hệ thống tự động chèn '{inserted_char}' vào giữa.")
                 i += 1
             else:
                 i += 2
@@ -160,3 +177,26 @@ class PlayfairCipher:
 
     def decrypt_text(self, text, key=None):
         return self.decrypt(text)
+
+
+# ==========================================
+# CÁCH TEST ĐỂ XEM CẢNH BÁO
+# ==========================================
+if __name__ == "__main__":
+    try:
+        # Cố tình tạo một trường hợp kích hoạt nhiều cảnh báo
+        print("Đang mã hóa chuỗi: 'JAPPLE' với Key: 'NINJA'\n")
+        
+        cipher = PlayfairCipher("NINJA")
+        result = cipher.encrypt("JAPPLE")
+        
+        print(f"✅ Bản mã kết quả: {result}\n")
+        
+        # In các cảnh báo thu thập được
+        if cipher.warnings:
+            print("🔔 LỊCH SỬ CHỈNH SỬA TỰ ĐỘNG:")
+            for warn in cipher.warnings:
+                print(warn)
+                
+    except ValueError as e:
+        print(f"❌ LỖI NGHIÊM TRỌNG: {e}")

@@ -80,7 +80,11 @@ def api_playfair_encrypt():
             
         Playfair = PlayfairCipher(key)
         encrypted_text = Playfair.encrypt(text)
-        return json.jsonify({"encrypted_message": encrypted_text})
+        return json.jsonify({
+            "encrypted_message": encrypted_text,
+            "encrypted_text": encrypted_text,
+            "warnings": Playfair.warnings
+        })
     except Exception as e:
         return json.jsonify({"error": str(e)}), 400
 
@@ -95,7 +99,10 @@ def api_playfair_decrypt():
             
         Playfair = PlayfairCipher(key)
         decrypted_text = Playfair.decrypt(text)
-        return json.jsonify({"decrypted_message": decrypted_text})
+        return json.jsonify({
+            "decrypted_message": decrypted_text,
+            "decrypted_text": decrypted_text
+        })
     except Exception as e:
         return json.jsonify({"error": str(e)}), 400
 
